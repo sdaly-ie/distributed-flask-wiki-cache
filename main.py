@@ -91,10 +91,10 @@ def fetch_wikipedia_result(query):
 
     Opens a Paramiko SSH session to the configured EC2 instance,
     executes the remote Python interpreter against wiki.py with
-    the user query passed as a shell-quoted argument, and returns
-    the remote stdout. If the remote script writes to stderr,
-    that output is returned to the caller instead so the failure
-    surfaces in the browser.
+    the user query passed as a shell-quoted argument, and returns 
+    the remote stdout. If stdout is empty and stderr contains
+    output, stderr is returned instead so genuine failures surface
+    in the browser.
     """
     cmd = f'{REMOTE_PYTHON} {REMOTE_SCRIPT} {shlex.quote(query)}'
     client = paramiko.SSHClient()
@@ -106,12 +106,12 @@ def fetch_wikipedia_result(query):
     errors = stderr.read().decode().strip()
     output = stdout.read().decode().strip()
     client.close()
-    if errors:
-        return f"Remote error:\n{errors}"
+    # stderr can contain harmless warnings (e.g. library deprecation notices). Only treat stderr as an error when stdout is empty.
     if output:
         return output
+    if errors:
+        return f"Remote error:\n{errors}"
     return "No output returned from Wikipedia script."
-
 
 @app.route("/", methods=["GET"])
 def home():
