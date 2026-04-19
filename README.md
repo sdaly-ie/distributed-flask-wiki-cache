@@ -8,8 +8,6 @@
 ![Paramiko](https://img.shields.io/badge/Paramiko-SSH-4A90E2)
 ![Release](https://img.shields.io/github/v/release/sdaly-ie/distributed-flask-wiki-cache)
 
-# Distributed Flask Web Application with Remote Wikipedia Search and MySQL Cache
-
 A three-tier distributed web application demonstrating core cloud computing
 concepts: VM-to-VM networking, remote script execution over SSH, and
 database-backed caching. A Flask front end on one Ubuntu VM orchestrates a
@@ -23,7 +21,7 @@ served from the cache in a fraction of the time.
 |---|---|---|
 | ![Search form](docs/screenshots/01-landing.jpg) | ![Cache miss](docs/screenshots/02-cache-miss.jpg) | ![Cache hit](docs/screenshots/03-cache-hit.jpg) |
 
-The **Source** line on each result page tells you where the answer came from. Searching for `Apollo 8` the first time goes all the way out to Wikipedia via Amazon EC2; searching for `Apollo 8` a second time comes straight back from the local database cache in a fraction of the time.
+The **Source** line on each result page tells you where the answer came from. The first search for a term fetches it from Wikipedia via Amazon EC2; a repeat search for the same term comes straight back from the cache in a fraction of the time.
 
 | Row stored in MySQL | Cache container running | EC2 instance running |
 |---|---|---|
@@ -160,6 +158,16 @@ pip install wikipedia
 
 Security group: open inbound SSH (port 22) from the Flask VM's public address only. Don't leave SSH open to `0.0.0.0/0`.
 
+## Host-to-VM network path
+
+The host browser reaches the Flask application through a VirtualBox NAT port forwarding rule that maps host port 8888 to guest port 8888 on the Flask VM. Configure the rule once in **VirtualBox Manager → Settings → Network → Adapter 1 → Advanced → Port Forwarding**:
+
+| Name       | Protocol | Host IP     | Host Port | Guest IP    | Guest Port |
+|------------|----------|-------------|-----------|-------------|------------|
+| flask8888  | TCP      | *(blank)*   | 8888      | *(blank)*   | 8888       |
+
+This path works regardless of the host's broader network configuration, including when the host has no interface on the VM's host-only subnet. A host-only adapter IP in the `192.168.x.x` range is also a valid path if the host has a corresponding interface, but the NAT rule is more portable across environments.
+
 ## Running the application
 
 On the Flask VM, from the project directory with the virtualenv active:
@@ -167,19 +175,23 @@ On the Flask VM, from the project directory with the virtualenv active:
 ```bash
 export EC2_INSTANCE_IP="<real-ec2-ip>"
 export EC2_KEY_FILE="/home/stephendaly/ct5169-ca1/CT5169.pem"
+export REMOTE_PYTHON="/home/ubuntu/ct5169-wiki/venv/bin/python"
+export REMOTE_SCRIPT="/home/ubuntu/ct5169-wiki/wiki.py"
+export REMOTE_USERNAME="ubuntu"
 export CACHE_DB_HOST="<real-cache-vm-ip>"
+export CACHE_DB_PORT="7888"
+export CACHE_DB_NAME="wiki_cache"
+export CACHE_DB_USER="ct5169"
 export CACHE_DB_PASSWORD="<real-mysql-password>"
 
 python3 main.py
 ```
 
-Flask starts on `0.0.0.0:8888`. From the host browser:
+Flask starts on `0.0.0.0:8888`. From the host browser, navigate to:
 
 ```
-http://<flask-vm-host-only-ip>:8888/
+http://127.0.0.1:8888/
 ```
-
-The host-only adapter IP is typically in the `192.168.x.x` range and is visible on the Flask VM via `ip -4 addr show`.
 
 ## Database schema
 
@@ -226,7 +238,7 @@ sudo usermod -aG docker $USER
 ```
 
 **Host browser can't reach the Flask VM**
-`127.0.0.1` from the host points at the host, not the VM. Use the VM's host-only adapter IP instead (`ip -4 addr show` on the Flask VM — look for the `192.168.x.x` address on `enp0s8` or equivalent).
+Confirm the VirtualBox NAT port forwarding rule exists and maps host port 8888 to guest port 8888 on the Flask VM's Adapter 1 (see *Host-to-VM network path* above). If an active VPN client is routing traffic through an external tunnel, disconnect it before testing. As a fallback, a host-only adapter IP in the `192.168.x.x` range (visible via `ip -4 addr show` on the Flask VM) also works if your host has a matching interface on the same subnet.
 
 ## Reviewer path
 
