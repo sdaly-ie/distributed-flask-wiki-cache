@@ -1,0 +1,28 @@
+# CT5169 CA1 MySQL cache container.
+# Runs on a separate Ubuntu VM. Host port 7888 matches
+# CACHE_DB_PORT in main.py on the Flask VM
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ct5169_cache_mysql
+    restart: unless-stopped
+    ports:
+      - "7888:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change_me_root}
+      MYSQL_DATABASE: wiki_cache
+      MYSQL_USER: ct5169
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-change_me_user}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost",
+             "-u", "ct5169", "-p$$MYSQL_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_data:
