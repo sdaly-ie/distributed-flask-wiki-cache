@@ -8,9 +8,14 @@
 ![Paramiko](https://img.shields.io/badge/Paramiko-SSH-4A90E2)
 ![Release](https://img.shields.io/github/v/release/sdaly-ie/distributed-flask-wiki-cache)
 
-Type something into a search box, get a Wikipedia summary back. The interesting bit is what's under the hood: the search form and the Wikipedia lookup run on two different machines, connected over SSH, with a database cache sitting between them so repeat searches return instantly.
+# Distributed Flask Web Application with Remote Wikipedia Search and MySQL Cache
 
-Built for CT5169 (Fundamentals of Cloud Computing) at the University of Galway.
+A three-tier distributed web application demonstrating core cloud computing
+concepts: VM-to-VM networking, remote script execution over SSH, and
+database-backed caching. A Flask front end on one Ubuntu VM orchestrates a
+Wikipedia lookup that executes remotely on an Amazon EC2 instance, with a
+MySQL cache in Docker on a separate VM between them. Repeat queries are
+served from the cache in a fraction of the time.
 
 ## See it in action
 

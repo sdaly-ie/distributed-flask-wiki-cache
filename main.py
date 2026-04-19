@@ -184,7 +184,7 @@ def search():
         <h1>Search Result</h1>
         <p>You searched for: <strong>{safe_query}</strong></p>
         <p><strong>Source:</strong> {safe_source}</p>
-        <pre>{safe_result}</pre>
+        <pre style="white-space: pre-wrap; word-wrap: break-word;">{safe_result}</pre>
         <a href="/">Search for something else</a>
     </body>
     </html>
